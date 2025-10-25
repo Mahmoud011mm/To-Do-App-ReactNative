@@ -1,36 +1,12 @@
 import { View, Keyboard } from "react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { addTodo } from "../redux/todosSlice";
 import TodoList from "../components/TodoList";
 import Header from "../layout/Header";
 import NewTodo from "../components/NewTodo";
 import Filters from "../components/Filters";
 
-const todosInitial = [
-    {
-        id: 1,
-        title: "Task 1",
-        description: "Go to the gym",
-        status: "Active",
-    },
-    {
-        id: 2,
-        title: "Task 2",
-        description: "Go to the gym",
-        status: "Done",
-    },
-    {
-        id: 3,
-        title: "Task 3",
-        description: "Go to the gym",
-        status: "Done",
-    },
-    {
-        id: 4,
-        title: "Task 4",
-        description: "Go to the gym",
-        status: "Active",
-    },
-];
 const newTodoInitial = {
     id: 0,
     title: "",
@@ -39,11 +15,18 @@ const newTodoInitial = {
 };
 
 const Home = () => {
-    // ------------- States -------------
-    const [todos, setTodos] = useState(todosInitial);
+    // ------------- Redux State -------------
+    const todos = useSelector((state) => state.todos.todos);
+    const dispatch = useDispatch();
+
+    // ------------- Local UI State -------------
     const [newTodo, setNewTodo] = useState(newTodoInitial);
     const [filter, setFilter] = useState("All");
-    const [displayedTodos, setDisplayedTodos] = useState(todosInitial);
+
+    const displayedTodos = useMemo(() => {
+        if (filter === "All") return todos;
+        return todos.filter((t) => t.status === filter);
+    }, [todos, filter]);
 
     // ------------- Handlers -------------
     const handleTitle = (text) => {
@@ -54,15 +37,11 @@ const Home = () => {
     };
     const handleFilter = (value) => {
         setFilter(value);
-        if (value !== "All")
-            setDisplayedTodos(todos.filter((item) => item.status === value));
-        else setDisplayedTodos(todos);
     };
     const handleAddTodo = () => {
-        const newTodos = [...todos, { ...newTodo, id: todos.length + 1 }];
-        setTodos(newTodos);
+        if (!newTodo.title?.trim()) return;
+        dispatch(addTodo({ title: newTodo.title.trim(), description: newTodo.description }));
         setNewTodo(newTodoInitial);
-        setDisplayedTodos(newTodos);
         Keyboard.dismiss();
     };
 
